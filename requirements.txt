@@ -4,3 +4,5 @@ flask_cors
 aiohttp
 aiosqlite
 python-dotenv
+PyNaCl
+davey
