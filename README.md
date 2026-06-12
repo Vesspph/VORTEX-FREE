@@ -306,9 +306,8 @@ async function validateVortexKey(inputKey, userDeviceFingerprint) {
 3. **การดึงค่า HWID ถาวร:** หลีกเลี่ยงการใช้ค่าที่เปลี่ยนเองได้ง่าย เช่น IP Address ควรดึงค่าที่ไม่ซ้ำกันของฮาร์ดแวร์จริง เช่น **UUID ของเมนบอร์ด (Motherboard UUID)** หรือ **ซีเรียลนัมเบอร์ของ SSD** แทน
 
 ---
-
+```
 *พัฒนาและออกแบบระบบโดย VORTEX Security System*
-
 ```
 
-```
+
