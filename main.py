@@ -15,7 +15,7 @@ load_dotenv()
 
 TOKEN         = os.getenv("DISCORD_TOKEN")
 ADMIN_ROLE_ID = int(os.getenv("ADMIN_ROLE_ID"))
-API_PORT      = int(os.getenv("API_PORT")
+API_PORT      = int(os.getenv("API_PORT"))
 DB_FILE       = "vortex_keys.db"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
