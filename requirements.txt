@@ -1,0 +1,6 @@
+Flask
+discord
+flask_cors
+aiohttp
+aiosqlite
+python-dotenv
