@@ -6,3 +6,4 @@ aiosqlite
 python-dotenv
 PyNaCl
 davey
+rich
