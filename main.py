@@ -33,12 +33,25 @@ load_dotenv()
 
 TOKEN         = os.getenv("DISCORD_TOKEN")
 ADMIN_ROLE_ID = int(os.getenv("ADMIN_ROLE_ID", 0))
-API_PORT      = int(os.getenv("API_PORT", 30184))
 DB_FILE       = "vortex_keys.db"
 
 
 # ── Hardcoded terminal password ──
 TERMINAL_PASSWORD = "vortex2026"   # 🔑 เปลี่ยนรหัสตรงนี้
+
+def _get_api_port():
+    """ใช้พอร์ตจริงของ task/runtime ก่อน แล้วค่อย fallback เป็น API_PORT/30184."""
+    for name in ("PORT", "SERVER_PORT", "WEB_PORT", "TASK_PORT", "API_PORT"):
+        raw = os.getenv(name)
+        if not raw:
+            continue
+        try:
+            port = int(raw)
+            if 1 <= port <= 65535:
+                return port, name
+        except ValueError:
+            continue
+    return 30184, "default"
 
 def _get_lan_ip():
     """LAN IP ของเครื่อง (ใช้กับ home/personal PC)."""
@@ -77,22 +90,18 @@ def _is_private_ip(ip):
         return True
 
 def _detect_host_url():
-    """ตรวจอัตโนมัติ:
-       - มี env HOST_IP / PUBLIC_HOST → ใช้เลย
-       - LAN IP เป็น private (home/PC)  → ลองดึง public IP; ถ้าได้ใช้ public, ไม่ได้ใช้ LAN
-       - LAN IP เป็น public อยู่แล้ว (VPS bare-metal) → ใช้เลย
-    """
-    env = os.getenv("HOST_IP") or os.getenv("PUBLIC_HOST")
+    """ลิงก์แดชบอร์ดต้องเข้าได้จากเครื่องที่รัน task นี้ก่อนเสมอ."""
+    env = os.getenv("DASHBOARD_HOST") or os.getenv("HOST_IP") or os.getenv("PUBLIC_HOST")
     if env:
-        return env.strip(), "env"
-    lan = _get_lan_ip()
-    if not _is_private_ip(lan):
-        return lan, "lan-public"
-    pub = _get_public_ip()
-    if pub:
-        return pub, "public-detected"
-    return lan, "lan-private"
+        return env.strip().removeprefix("http://").removeprefix("https://").split("/")[0].split(":")[0], "env"
 
+    # browser.open() และ Chrome บนเครื่องเดียวกันควรใช้ loopback ไม่ใช่ public IP บ้าน
+    if os.getenv("USE_LAN_DASHBOARD_URL", "").lower() in ("1", "true", "yes", "on"):
+        lan = _get_lan_ip()
+        return lan, "lan-env"
+    return "127.0.0.1", "loopback"
+
+API_PORT, _PORT_SRC = _get_api_port()
 HOST_IP, _HOST_SRC = _detect_host_url()
 BASE_URL      = f"http://{HOST_IP}:{API_PORT}"
 
@@ -1671,7 +1680,7 @@ class VortexBot(commands.Bot):
         self.web_runner = web.AppRunner(app)
         await self.web_runner.setup()
         await web.TCPSite(self.web_runner, "0.0.0.0", API_PORT).start()
-        logger.info(f"🌐 API + Dashboard → {BASE_URL}/dashboard")
+        logger.info(f"🌐 API + Dashboard → {BASE_URL}/dashboard  (port from {_PORT_SRC})")
         self.loop.create_task(terminal_loop())
         await self.tree.sync()
 
